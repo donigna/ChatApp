@@ -1,116 +1,189 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-
-namespace ChatClient;
-
-public partial class MainWindow : Window
+public class ChatMessage
 {
-    private TcpClient client;
-    private NetworkStream stream;
-    private Thread listenerThread;
+    public string[]? users { get; set; }
+    public string type { get; set; } = "msg";
+    public string from { get; set; } = "";
+    public string? to { get; set; }
+    public string text { get; set; } = "";
+    public long ts { get; set; }
+}
 
-    public MainWindow()
+namespace ChatClient
+{
+
+
+    public partial class MainWindow : Window
     {
-        InitializeComponent();
+        private TcpClient? _client;
+        private NetworkStream? _stream;
+        private ObservableCollection<string> _users = new();
+        private string _username = "";
 
-        
-        try
+        public MainWindow()
         {
-            client = new TcpClient("127.0.0.1", 5000);
-            stream = client.GetStream();
-            AppendMessage("Connected to server.");
+            InitializeComponent();
 
-            
-            listenerThread = new Thread(ListenForMessages);
-            listenerThread.IsBackground = true;
-            listenerThread.Start();
+            UserList.ItemsSource = _users;
+
+            ConnectButton.Click += ConnectButton_Click;
+            DisconnectButton.Click += DisconnectButton_Click;
+            SendButton.Click += SendButton_Click;
+            // try
+            // {
+            //     client = new TcpClient("127.0.0.1", 5000);
+            //     stream = client.GetStream();
+            //     AppendMessage("Connected to server.");
+
+
+            //     listenerThread = new Thread(ListenForMessages);
+            //     listenerThread.IsBackground = true;
+            //     listenerThread.Start();
+            // }
+            // catch (Exception ex)
+            // {
+            //     AppendMessage("Error connecting to server: " + ex.Message);
+            // }
+
+            // SendButton.Click += OnSend;
         }
-        catch (Exception ex)
+
+        private async void ConnectButton_Click(object? sender, RoutedEventArgs e)
         {
-            AppendMessage("Error connecting to server: " + ex.Message);
-        }
-
-        UserList.Items.Add("Ana");
-        UserList.Items.Add("Dina");
-        UserList.Items.Add("Udin");
-
-        SendButton.Click += OnSend;
-    }
-
-    private void OnSend(object? sender, RoutedEventArgs e)
-    {
-        var text = ChatInput.Text?.Trim();
-        if (string.IsNullOrEmpty(text)) return;
-
-        string message;
-
-        if (text.StartsWith("/W"))
-        {
-            var parts = text.Split(' ', 3);
-            if (parts.Length >= 3)
+            try
             {
-                string targetUser = parts[1];
-                string pmText = parts[2];
-                message = $"[PM to {targetUser}] {pmText}";
+                string[] parts = (ServerInput.Text ?? "127.0.0.1:5000").Split(":");
+                string host = parts[0];
+                int port = int.Parse(parts[1]);
+
+                _username = UsernameInput.Text ?? "Anonymous";
+
+                _client = new TcpClient();
+                await _client.ConnectAsync(host, port);
+                _stream = _client.GetStream();
+
+                _ = ListenAsync();
+
+                var joinMsg = new ChatMessage { type = "join", from = _username };
+                await SendAsync(joinMsg);
+
+                AppendMessage($"Connected as {_username}");
+
+                ConnectButton.IsEnabled = false;
+                DisconnectButton.IsEnabled = true;
             }
-            else
+            catch (Exception ex)
             {
-                message = "Format salah. Gunakan: /w <user> <pesan>";
+                AppendMessage($"Error: {ex.Message}");
             }
         }
-        else
+
+        private void DisconnectButton_Click(object? sender, RoutedEventArgs e)
         {
-            message = $"You: {text}";
-        }
-
-        SendMessageToServer(message);
-        ChatInput.Text = string.Empty;
-    }
-
-    private void SendMessageToServer(string message)
-    {
-        if (stream != null && stream.CanWrite)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(message);
-            stream.Write(data, 0, data.Length);
-        }
-    }
-
-    private void ListenForMessages()
-    {
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-
-        try
-        {
-            while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+            if (_client != null && _client.Connected)
             {
-                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Dispatcher.UIThread.Post(() =>
+                _stream?.Close();
+                _client.Close();
+            }
+
+            AppendMessage("Disconnected.");
+            _users.Clear();
+
+            ConnectButton.IsEnabled = true;
+            DisconnectButton.IsEnabled = false;
+        }
+
+        private async void SendButton_Click(object? sender, RoutedEventArgs e)
+        {
+            if (_stream == null || !_client!.Connected) return;
+
+            var msg = new ChatMessage
+            {
+                type = "msg",
+                from = _username,
+                text = ChatInput.Text ?? ""
+            };
+
+            await SendAsync(msg);
+
+            ChatInput.Text = "";
+        }
+
+        private async Task ListenAsync()
+        {
+            if (_stream == null) return;
+
+            byte[] buffer = new byte[4096];
+
+            try
+            {
+                while (_client != null && _client.Connected)
                 {
-                    AppendMessage(message);
-                });
+                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
+                    if (bytesRead == 0) break;
+
+                    string json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    var msg = JsonSerializer.Deserialize<ChatMessage>(json);
+
+                    if (msg != null)
+                    {
+                        switch (msg.type)
+                        {
+                            case "msg":
+                                AppendMessage($"[{msg.from}] {msg.text}");
+                                break;
+                            case "sys":
+                                if (msg.from != _username)
+                                    AppendMessage($"* {msg.text}");
+                                break;
+                            case "userlist":
+                                if (msg.users != null)
+                                {
+                                    await Dispatcher.UIThread.InvokeAsync(() =>
+                                    {
+                                        _users.Clear();
+                                        foreach (var u in msg.users)
+                                        {
+                                            _users.Add(u);
+                                        }
+                                    });
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendMessage($"Connection lost: {ex.Message}");
             }
         }
-        catch
+
+        private async Task SendAsync(ChatMessage msg)
         {
-            Dispatcher.UIThread.Post(() =>
+            if (_stream == null) return;
+
+            string json = JsonSerializer.Serialize(msg);
+            byte[] data = Encoding.UTF8.GetBytes(json);
+            await _stream.WriteAsync(data, 0, data.Length);
+        }
+
+        private void AppendMessage(string message)
+        {
+            ChatPanel.Children.Add(new TextBlock
             {
-                AppendMessage("Disconnected from server.");
+                Text = $"{DateTime.Now:HH:mm} {message}",
+                Margin = new Avalonia.Thickness(2)
             });
         }
-    }
-
-    private void AppendMessage(string message)
-    {
-        ChatPanel.Children.Add(new TextBlock
-        {
-            Text = $"{DateTime.Now:HH:mm} {message}"
-        });
     }
 }

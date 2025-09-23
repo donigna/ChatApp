@@ -8,34 +8,40 @@
         WindowStartupLocation="CenterScreen"
         Width="1000" Height="700">
 
-        <Grid ColumnDefinitions="200,*" RowDefinitions="* , Auto">
-            <Border Grid.Row="0" Grid.Column="0" BorderBrush="Gray" BorderThickness="0,0,1,0">
+        <Grid ColumnDefinitions="200,*" RowDefinitions="Auto,*, Auto">
+            <StackPanel Orientation="Horizontal" Grid.Row="0">
+                <TextBox x:Name="ServerInput" Width="150" Watermark="127.0.0.1:5000" Margin="0,0,10,0"/>
+                <TextBox x:Name="UsernameInput" Width="120" Watermark="Username" Margin="0,0,10,0"/>
+                <Button x:Name="ConnectButton" Content="Connect" Margin="0,0,10,0"/>
+                <Button x:Name="DisconnectButton" Content="Disconnect" IsEnabled="False"/>
+            </StackPanel>
+
+            <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="0,0,1,0">
                 <StackPanel>
                     <TextBlock Text="User Aktif" FontWeight="Bold" Margin="10"/>
                     <ListBox x:Name="UserList"/>
                 </StackPanel>
             </Border>    
 
-            <Border Grid.Row="0" Grid.Column="1" BorderBrush="Gray" BorderThickness="0,0,0,1">
+            <Border Grid.Row="1" Grid.Column="1" BorderBrush="Gray" BorderThickness="0,0,0,1">
                 <ScrollViewer>
                     <StackPanel x:Name="ChatPanel" Margin="10"/>
                 </ScrollViewer>
             </Border>
 
-            <DockPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="5">
-    <!-- Tombol send di kanan -->
-    <Button x:Name="SendButton"
-            Width="60"
-            DockPanel.Dock="Right"
-            Margin="5,0,0,0"> 
-        <TextBlock Text="➤" TextAlignment="Center"/>
-    </Button>
-    
-    <!-- TextBox otomatis isi sisa lebar -->
-    <TextBox x:Name="ChatInput"
-             Watermark="Ketik pesan..."
-             VerticalAlignment="Center"/>
-</DockPanel>
+            <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="5">
+                
+            <Button x:Name="SendButton"
+                    Width="60"
+                    DockPanel.Dock="Right"
+                    Margin="5,0,0,0"> 
+                <TextBlock Text="➤" TextAlignment="Center"/>
+            </Button>
+        
+            <TextBox x:Name="ChatInput"
+                    Watermark="Ketik pesan..."
+                    VerticalAlignment="Center"/>
+            </DockPanel>
 
         </Grid>
 </Window>

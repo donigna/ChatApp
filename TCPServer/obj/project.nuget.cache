@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "5NgLKXB5kWA=",
+  "dgSpecHash": "smcuABv16/Y=",
   "success": true,
-  "projectFilePath": "C:\\Users\\lenovo\\Documents\\ChatApp\\TCPServer\\TCPServer.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/home/donigna/Kuliah/ChatApp/TCPServer/TCPServer.csproj",
+  "expectedPackageFiles": [
+    "/home/donigna/.nuget/packages/microsoft.netcore.app.ref/8.0.20/microsoft.netcore.app.ref.8.0.20.nupkg.sha512",
+    "/home/donigna/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.20/microsoft.aspnetcore.app.ref.8.0.20.nupkg.sha512",
+    "/home/donigna/.nuget/packages/microsoft.netcore.app.host.linux-x64/8.0.20/microsoft.netcore.app.host.linux-x64.8.0.20.nupkg.sha512"
+  ],
   "logs": []
 }
