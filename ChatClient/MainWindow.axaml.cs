@@ -1,189 +1,228 @@
+// Client/MainWindow.cs - Versi Perbaikan
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
+using ChatShared;
 using System;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Avalonia.Threading;
-public class ChatMessage
+
+namespace ChatClient;
+
+public partial class MainWindow : Window
 {
-    public string[]? users { get; set; }
-    public string type { get; set; } = "msg";
-    public string from { get; set; } = "";
-    public string? to { get; set; }
-    public string text { get; set; } = "";
-    public long ts { get; set; }
-}
+    private TcpClient? _client;
+    private StreamReader? _reader;
+    private StreamWriter? _writer;
+    private bool _isConnected = false;
+    private string _username = "";
 
-namespace ChatClient
-{
-
-
-    public partial class MainWindow : Window
+    public MainWindow()
     {
-        private TcpClient? _client;
-        private NetworkStream? _stream;
-        private ObservableCollection<string> _users = new();
-        private string _username = "";
+        InitializeComponent();
+        this.Closing += OnWindowClosing;
+    }
 
-        public MainWindow()
+    private async void ConnectButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var ip = IpTextBox.Text;
+        var portStr = PortTextBox.Text;
+        var user = UsernameTextBox.Text;
+
+        if (string.IsNullOrWhiteSpace(ip) || string.IsNullOrWhiteSpace(portStr) || string.IsNullOrWhiteSpace(user))
         {
-            InitializeComponent();
-
-            UserList.ItemsSource = _users;
-
-            ConnectButton.Click += ConnectButton_Click;
-            DisconnectButton.Click += DisconnectButton_Click;
-            SendButton.Click += SendButton_Click;
-            // try
-            // {
-            //     client = new TcpClient("127.0.0.1", 5000);
-            //     stream = client.GetStream();
-            //     AppendMessage("Connected to server.");
-
-
-            //     listenerThread = new Thread(ListenForMessages);
-            //     listenerThread.IsBackground = true;
-            //     listenerThread.Start();
-            // }
-            // catch (Exception ex)
-            // {
-            //     AppendMessage("Error connecting to server: " + ex.Message);
-            // }
-
-            // SendButton.Click += OnSend;
+            AddMessageToChat("[SYSTEM]: IP, Port, dan Username tidak boleh kosong.", Brushes.DarkOrange);
+            return;
         }
 
-        private async void ConnectButton_Click(object? sender, RoutedEventArgs e)
+        if (!int.TryParse(portStr, out var port))
         {
-            try
-            {
-                string[] parts = (ServerInput.Text ?? "127.0.0.1:5000").Split(":");
-                string host = parts[0];
-                int port = int.Parse(parts[1]);
-
-                _username = UsernameInput.Text ?? "Anonymous";
-
-                _client = new TcpClient();
-                await _client.ConnectAsync(host, port);
-                _stream = _client.GetStream();
-
-                _ = ListenAsync();
-
-                var joinMsg = new ChatMessage { type = "join", from = _username };
-                await SendAsync(joinMsg);
-
-                AppendMessage($"Connected as {_username}");
-
-                ConnectButton.IsEnabled = false;
-                DisconnectButton.IsEnabled = true;
-            }
-            catch (Exception ex)
-            {
-                AppendMessage($"Error: {ex.Message}");
-            }
+            AddMessageToChat("[SYSTEM]: Port harus berupa angka.", Brushes.DarkOrange);
+            return;
         }
 
-        private void DisconnectButton_Click(object? sender, RoutedEventArgs e)
+        try
         {
-            if (_client != null && _client.Connected)
-            {
-                _stream?.Close();
-                _client.Close();
-            }
+            _client = new TcpClient();
+            await _client.ConnectAsync(ip, port);
 
-            AppendMessage("Disconnected.");
-            _users.Clear();
+            _isConnected = true;
+            _username = user;
+            var stream = _client.GetStream();
+            _reader = new StreamReader(stream, Encoding.UTF8);
+            _writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
-            ConnectButton.IsEnabled = true;
-            DisconnectButton.IsEnabled = false;
+            var connectMessage = new ChatMessage { Type = MessageType.Connect, From = _username };
+            await _writer.WriteLineAsync(JsonSerializer.Serialize(connectMessage));
+
+            ToggleControls(true);
+            AddMessageToChat("[SYSTEM]: Tersambung ke server.", Brushes.Green);
+
+            _ = Task.Run(ListenForMessagesAsync);
         }
-
-        private async void SendButton_Click(object? sender, RoutedEventArgs e)
+        catch (Exception ex)
         {
-            if (_stream == null || !_client!.Connected) return;
-
-            var msg = new ChatMessage
-            {
-                type = "msg",
-                from = _username,
-                text = ChatInput.Text ?? ""
-            };
-
-            await SendAsync(msg);
-
-            ChatInput.Text = "";
+            AddMessageToChat($"[SYSTEM]: Gagal terhubung: {ex.Message}", Brushes.Red);
+            CleanupConnection();
         }
+    }
 
-        private async Task ListenAsync()
+    private async Task ListenForMessagesAsync()
+    {
+        try
         {
-            if (_stream == null) return;
-
-            byte[] buffer = new byte[4096];
-
-            try
+            while (_isConnected && _reader != null)
             {
-                while (_client != null && _client.Connected)
+                var jsonMessage = await _reader.ReadLineAsync();
+                if (jsonMessage == null) break;
+
+                var message = JsonSerializer.Deserialize<ChatMessage>(jsonMessage);
+                if (message == null) continue;
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
-                    if (bytesRead == 0) break;
-
-                    string json = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    var msg = JsonSerializer.Deserialize<ChatMessage>(json);
-
-                    if (msg != null)
+                    switch (message.Type)
                     {
-                        switch (msg.type)
-                        {
-                            case "msg":
-                                AppendMessage($"[{msg.from}] {msg.text}");
-                                break;
-                            case "sys":
-                                if (msg.from != _username)
-                                    AppendMessage($"* {msg.text}");
-                                break;
-                            case "userlist":
-                                if (msg.users != null)
-                                {
-                                    await Dispatcher.UIThread.InvokeAsync(() =>
-                                    {
-                                        _users.Clear();
-                                        foreach (var u in msg.users)
-                                        {
-                                            _users.Add(u);
-                                        }
-                                    });
-                                }
-                                break;
-                        }
+                        case MessageType.Broadcast:
+                            var sender = message.From == _username ? "You" : message.From;
+                            var color = message.From == _username ? Brushes.GreenYellow : Brushes.GreenYellow;
+                            AddMessageToChat($"[{sender}]: {message.Text}", color);
+                            break;
+                        case MessageType.Private:
+                            AddMessageToChat($"[PM dari {message.From}]: {message.Text}", Brushes.BlueViolet);
+                            break;
+                        case MessageType.System:
+                            AddMessageToChat($"[SYSTEM]: {message.Text}", Brushes.SlateGray);
+                            break;
+                        case MessageType.UserList:
+                            UpdateUserList(message.Users);
+                            break;
+                        default:
+                            AddMessageToChat($"[DEBUG]: Pesan tidak dikenali: {jsonMessage}", Brushes.DarkRed);
+                            break;
                     }
+                });
+            }
+        }
+        catch (IOException)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => AddMessageToChat("[SYSTEM]: Koneksi ke server terputus.", Brushes.Red));
+        }
+        catch (Exception ex)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => AddMessageToChat($"[SYSTEM]: Terjadi error: {ex.Message}", Brushes.Red));
+        }
+        finally
+        {
+            CleanupConnection();
+        }
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if (string.IsNullOrWhiteSpace(MessageTextBox.Text) || !_isConnected || _writer == null) return;
+
+        try
+        {
+            var rawMessage = MessageTextBox.Text;
+            ChatMessage chatMessage;
+
+            if (rawMessage.StartsWith("/w "))
+            {
+                var parts = rawMessage.Split(new[] { ' ' }, 3);
+                if (parts.Length == 3)
+                {
+                    chatMessage = new ChatMessage { Type = MessageType.Private, To = parts[1], Text = parts[2] };
+                }
+                else
+                {
+                    AddMessageToChat("[SYSTEM]: Format PM salah. Gunakan: /w <username> <pesan>", Brushes.DarkOrange);
+                    return;
                 }
             }
-            catch (Exception ex)
+            else
             {
-                AppendMessage($"Connection lost: {ex.Message}");
+                chatMessage = new ChatMessage { Type = MessageType.Broadcast, Text = rawMessage };
             }
+
+            await _writer.WriteLineAsync(JsonSerializer.Serialize(chatMessage));
+            MessageTextBox.Text = string.Empty;
         }
-
-        private async Task SendAsync(ChatMessage msg)
+        catch (Exception ex)
         {
-            if (_stream == null) return;
-
-            string json = JsonSerializer.Serialize(msg);
-            byte[] data = Encoding.UTF8.GetBytes(json);
-            await _stream.WriteAsync(data, 0, data.Length);
+            AddMessageToChat($"[SYSTEM]: Gagal mengirim pesan: {ex.Message}", Brushes.Red);
         }
+    }
 
-        private void AppendMessage(string message)
+    private void UpdateUserList(string[] users)
+    {
+        Dispatcher.UIThread.InvokeAsync(() =>
         {
-            ChatPanel.Children.Add(new TextBlock
-            {
-                Text = $"{DateTime.Now:HH:mm} {message}",
-                Margin = new Avalonia.Thickness(2)
-            });
+            UserList.ItemsSource = users;
+        });
+    }
+
+    private void DisconnectButton_Click(object? sender, RoutedEventArgs e) => CleanupConnection();
+    private void OnWindowClosing(object? sender, CancelEventArgs e) => CleanupConnection();
+
+    private void CleanupConnection()
+    {
+        if (!_isConnected) return;
+        _isConnected = false;
+        UserList.ItemsSource = null;
+
+        try
+        {
+            _writer?.Close();
+            _reader?.Close();
+            _client?.Close();
+        }
+        catch { }
+
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            ToggleControls(false);
+            AddMessageToChat("[SYSTEM]: Koneksi ditutup.", Brushes.Gray);
+        });
+    }
+
+    private void AddMessageToChat(string text, IBrush? color = null)
+    {
+        var messageBlock = new TextBlock
+        {
+            Text = $"[{DateTime.Now:HH:mm:ss}] {text}",
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = color ?? Brushes.Black,
+        };
+        ChatPanel.Children.Add(messageBlock);
+
+        ChatScrollViewer.ScrollToEnd();
+    }
+
+    private void ToggleControls(bool connected)
+    {
+        IpTextBox.IsEnabled = !connected;
+        PortTextBox.IsEnabled = !connected;
+        UsernameTextBox.IsEnabled = !connected;
+        ConnectButton.IsEnabled = !connected;
+
+        DisconnectButton.IsEnabled = connected;
+        MessageTextBox.IsEnabled = connected;
+        SendButton.IsEnabled = connected;
+    }
+
+    private async void SendButton_Click(object? sender, RoutedEventArgs e) => await SendMessageAsync();
+    private async void MessageTextBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            await SendMessageAsync();
         }
     }
 }

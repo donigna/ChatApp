@@ -9,11 +9,15 @@
         Width="1000" Height="700">
 
         <Grid ColumnDefinitions="200,*" RowDefinitions="Auto,*, Auto">
-            <StackPanel Orientation="Horizontal" Grid.Row="0">
-                <TextBox x:Name="ServerInput" Width="150" Watermark="127.0.0.1:5000" Margin="0,0,10,0"/>
-                <TextBox x:Name="UsernameInput" Width="120" Watermark="Username" Margin="0,0,10,0"/>
-                <Button x:Name="ConnectButton" Content="Connect" Margin="0,0,10,0"/>
-                <Button x:Name="DisconnectButton" Content="Disconnect" IsEnabled="False"/>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="IP Server:" VerticalAlignment="Center" Margin="5"/>
+                <TextBox x:Name="IpTextBox" Width="100" Text="127.0.0.1"/>
+                <TextBlock Text="Port:" VerticalAlignment="Center" Margin="5"/>
+                <TextBox x:Name="PortTextBox" Width="50" Text="8888"/>
+                <TextBlock Text="Username:" VerticalAlignment="Center" Margin="5"/>
+                <TextBox x:Name="UsernameTextBox" Width="100"/>
+                <Button x:Name="ConnectButton" Content="Connect" Margin="10,0" Padding="10,2" Click="ConnectButton_Click"/>
+                <Button x:Name="DisconnectButton" Content="Disconnect" IsEnabled="False" Padding="10,2" Click="DisconnectButton_Click"/>
             </StackPanel>
 
             <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray" BorderThickness="0,0,1,0">
@@ -24,8 +28,8 @@
             </Border>    
 
             <Border Grid.Row="1" Grid.Column="1" BorderBrush="Gray" BorderThickness="0,0,0,1">
-                <ScrollViewer>
-                    <StackPanel x:Name="ChatPanel" Margin="10"/>
+                <ScrollViewer x:Name="ChatScrollViewer" VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="ChatPanel"/>
                 </ScrollViewer>
             </Border>
 
@@ -34,13 +38,13 @@
             <Button x:Name="SendButton"
                     Width="60"
                     DockPanel.Dock="Right"
-                    Margin="5,0,0,0"> 
+                    Margin="5,0,0,0" Click="SendButton_Click"> 
                 <TextBlock Text="➤" TextAlignment="Center"/>
             </Button>
         
-            <TextBox x:Name="ChatInput"
+            <TextBox x:Name="MessageTextBox"
                     Watermark="Ketik pesan..."
-                    VerticalAlignment="Center"/>
+                    VerticalAlignment="Center" KeyDown="MessageTextBox_KeyDown"/>
             </DockPanel>
 
         </Grid>

@@ -3,10 +3,15 @@
 /home/donigna/Kuliah/ChatApp/TCPServer/bin/Debug/net9.0/TCPServer.runtimeconfig.json
 /home/donigna/Kuliah/ChatApp/TCPServer/bin/Debug/net9.0/TCPServer.dll
 /home/donigna/Kuliah/ChatApp/TCPServer/bin/Debug/net9.0/TCPServer.pdb
+/home/donigna/Kuliah/ChatApp/TCPServer/bin/Debug/net9.0/ChatShared.dll
+/home/donigna/Kuliah/ChatApp/TCPServer/bin/Debug/net9.0/ChatShared.pdb
+/home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.csproj.AssemblyReference.cache
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.GeneratedMSBuildEditorConfig.editorconfig
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.AssemblyInfoInputs.cache
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.AssemblyInfo.cs
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.csproj.CoreCompileInputs.cache
+/home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.sourcelink.json
+/home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.csproj.Up2Date
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.dll
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/refint/TCPServer.dll
 /home/donigna/Kuliah/ChatApp/TCPServer/obj/Debug/net9.0/TCPServer.pdb

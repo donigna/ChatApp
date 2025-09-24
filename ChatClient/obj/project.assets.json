@@ -582,6 +582,16 @@
         "runtime": {
           "lib/net8.0/Tmds.DBus.Protocol.dll": {}
         }
+      },
+      "ChatShared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/ChatShared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/ChatShared.dll": {}
+        }
       }
     }
   },
@@ -1404,6 +1414,11 @@
         "tmds.dbus.protocol.0.21.2.nupkg.sha512",
         "tmds.dbus.protocol.nuspec"
       ]
+    },
+    "ChatShared/1.0.0": {
+      "type": "project",
+      "path": "../ChatShared/ChatShared.csproj",
+      "msbuildProject": "../ChatShared/ChatShared.csproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -1412,7 +1427,8 @@
       "Avalonia.Desktop >= 11.3.6",
       "Avalonia.Diagnostics >= 11.3.6",
       "Avalonia.Fonts.Inter >= 11.3.6",
-      "Avalonia.Themes.Fluent >= 11.3.6"
+      "Avalonia.Themes.Fluent >= 11.3.6",
+      "ChatShared >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -1440,7 +1456,11 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "/home/donigna/Kuliah/ChatApp/ChatShared/ChatShared.csproj": {
+              "projectPath": "/home/donigna/Kuliah/ChatApp/ChatShared/ChatShared.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
