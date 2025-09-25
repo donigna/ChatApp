@@ -18,7 +18,7 @@ namespace ChatShared
         public string? To { get; set; }
         public string? Text { get; set; }
         public long Timestamp { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        public string[]? Users { get; set; }
+        public string[] Users { get; set; } = [];
     }
 }
 

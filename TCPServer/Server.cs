@@ -149,7 +149,7 @@ public class Server
 
             if (message.From != null && s_clients.TryGetValue(message.From, out var sourceWriter))
             {
-                var confirmationMsg = new ChatMessage { Type = MessageType.System, Text = $"Pesan Anda ke {message.To} telah terkirim." };
+                var confirmationMsg = new ChatMessage { Type = MessageType.System, Text = $"Pesan terikirim ke [{message.To}]: {message.Text}" };
                 await sourceWriter.WriteLineAsync(JsonSerializer.Serialize(confirmationMsg));
             }
         }
