@@ -38,10 +38,10 @@ public class Server
             }
             catch
             {
-                
+
             }
         }
-    } 
+    }
 
     private static async Task HandleClientAsync(TcpClient client)
     {
@@ -146,7 +146,7 @@ public class Server
     {
         var jsonMessage = JsonSerializer.Serialize(message);
 
-        ChatLogger.Log($"[{DateTime.Now:HH:mm:ss}] [{message.From}]: {message.Text}");
+        ChatLogger.Log($"[{DateTime.Now:HH:mm:ss}]: {message.Text}");
 
         foreach (var writer in s_clients.Values)
         {

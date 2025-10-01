@@ -7,7 +7,6 @@ namespace ChatShared
     {
         private static readonly List<string> _history = new();
 
-
         public static void Log(string message)
         {
             _history.Add(message);

@@ -30,7 +30,16 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        ToggleThemeTxt.Text = Application.Current?.RequestedThemeVariant == ThemeVariant.Light ? "☾" : "☀︎";
+        if (Application.Current?.RequestedThemeVariant == ThemeVariant.Light)
+        {
+            ToggleThemeTxt.Text = "☀︎"; // kalau lagi Dark, berarti bisa diganti ke Light
+            isDark = false;
+        }
+        else
+        {
+            ToggleThemeTxt.Text = "☾"; // kalau lagi Light, berarti bisa diganti ke Dark
+            isDark = true;
+        }
         this.Closing += OnWindowClosing;
     }
 
@@ -84,6 +93,8 @@ public partial class MainWindow : Window
 
             var connectMessage = new ChatMessage { Type = MessageType.Connect, From = _username };
             await _writer.WriteLineAsync(JsonSerializer.Serialize(connectMessage));
+
+            ChatPanel.Children.Clear();
 
             ToggleControls(true);
             AddMessageToChat("[SYSTEM]: Tersambung ke server.", Brushes.Green);
@@ -205,6 +216,7 @@ public partial class MainWindow : Window
     private void CleanupConnection()
     {
         if (!_isConnected) return;
+
         _isConnected = false;
         UserList.ItemsSource = null;
 
@@ -220,6 +232,7 @@ public partial class MainWindow : Window
         {
             ToggleControls(false);
             AddMessageToChat("[SYSTEM]: Koneksi ditutup.", Brushes.Gray);
+            TypingIndicator.Text = "";
         });
     }
 
