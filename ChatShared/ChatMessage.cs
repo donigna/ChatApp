@@ -8,7 +8,7 @@ namespace ChatShared
         Broadcast,
         Private,
         UserList,
-        System
+        System,
     }
 
     public class ChatMessage

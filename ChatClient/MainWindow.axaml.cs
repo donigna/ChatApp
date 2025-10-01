@@ -30,9 +30,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ToggleThemeTxt.Text = Application.Current?.RequestedThemeVariant == ThemeVariant.Light ? "☾" : "☀︎";
         this.Closing += OnWindowClosing;
-
-        
     }
 
     private void ToggleTheme(object? sender, RoutedEventArgs e)
@@ -42,11 +41,13 @@ public partial class MainWindow : Window
             if (isDark)
             {
                 app.RequestedThemeVariant = ThemeVariant.Light;
+                ToggleThemeTxt.Text = "☀︎";
                 isDark = false;
             }
             else
             {
                 app.RequestedThemeVariant = ThemeVariant.Dark;
+                ToggleThemeTxt.Text = "☾";
                 isDark = true;
             }
         }
@@ -226,10 +227,6 @@ public partial class MainWindow : Window
             Foreground = color ?? Brushes.Black,
         };
         ChatPanel.Children.Add(messageBlock);
-
-        ChatScrollViewer.ScrollToEnd();
-
-        
 
         ChatScrollViewer.ScrollToEnd();
     }

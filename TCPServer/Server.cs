@@ -1,4 +1,4 @@
-﻿using ChatShared;
+using ChatShared;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
@@ -22,7 +22,7 @@ public class Server
             var client = await server.AcceptTcpClientAsync();
             _ = HandleClientAsync(client);
         }
-    }   
+    }
 
     private static async Task HandleClientAsync(TcpClient client)
     {
