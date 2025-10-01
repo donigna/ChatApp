@@ -1,4 +1,5 @@
 // Client/MainWindow.cs - Versi Perbaikan
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -12,6 +13,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 
 namespace ChatClient;
 
@@ -22,11 +25,31 @@ public partial class MainWindow : Window
     private StreamWriter? _writer;
     private bool _isConnected = false;
     private string _username = "";
+    private bool isDark = false;
 
     public MainWindow()
     {
         InitializeComponent();
         this.Closing += OnWindowClosing;
+
+        
+    }
+
+    private void ToggleTheme(object? sender, RoutedEventArgs e)
+    {
+        if (Application.Current is App app)
+        {
+            if (isDark)
+            {
+                app.RequestedThemeVariant = ThemeVariant.Light;
+                isDark = false;
+            }
+            else
+            {
+                app.RequestedThemeVariant = ThemeVariant.Dark;
+                isDark = true;
+            }
+        }
     }
 
     private async void ConnectButton_Click(object? sender, RoutedEventArgs e)
@@ -194,13 +217,19 @@ public partial class MainWindow : Window
 
     private void AddMessageToChat(string text, IBrush? color = null)
     {
+        var fullText = $"[{DateTime.Now:HH:mm:ss}] {text}";
+
         var messageBlock = new TextBlock
         {
-            Text = $"[{DateTime.Now:HH:mm:ss}] {text}",
+            Text = fullText,
             TextWrapping = TextWrapping.Wrap,
             Foreground = color ?? Brushes.Black,
         };
         ChatPanel.Children.Add(messageBlock);
+
+        ChatScrollViewer.ScrollToEnd();
+
+        
 
         ChatScrollViewer.ScrollToEnd();
     }

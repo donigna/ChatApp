@@ -10,6 +10,7 @@
 
         <Grid ColumnDefinitions="200,*" RowDefinitions="Auto,*, Auto">
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+				<Button Content="Toggle Theme" Click="ToggleTheme"/>
                 <TextBlock Text="IP Server:" VerticalAlignment="Center" Margin="5"/>
                 <TextBox x:Name="IpTextBox" Width="100" Text="127.0.0.1"/>
                 <TextBlock Text="Port:" VerticalAlignment="Center" Margin="5"/>

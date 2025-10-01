@@ -22,7 +22,7 @@ public class Server
             var client = await server.AcceptTcpClientAsync();
             _ = HandleClientAsync(client);
         }
-    }
+    }   
 
     private static async Task HandleClientAsync(TcpClient client)
     {
@@ -55,6 +55,17 @@ public class Server
 
             Console.WriteLine($"[Koneksi] {username} terhubung.");
             await BroadcastUserListAsync();
+
+            // Kirim riwayat chat ke client baru
+            foreach (var historyLine in ChatLogger.GetHistory())
+            {
+                var historyMsg = new ChatMessage
+                {
+                    Type = MessageType.System,
+                    Text = historyLine
+                };
+                await writer.WriteLineAsync(JsonSerializer.Serialize(historyMsg));
+            }
 
             var joinNotification = new ChatMessage { Type = MessageType.System, Text = $"{username} telah bergabung." };
             await BroadcastMessageAsync(joinNotification);
@@ -106,6 +117,9 @@ public class Server
     private static async Task BroadcastMessageAsync(ChatMessage message)
     {
         var jsonMessage = JsonSerializer.Serialize(message);
+
+        ChatLogger.Log($"[{DateTime.Now:HH:mm:ss}] [{message.From}]: {message.Text}");
+
         foreach (var writer in s_clients.Values)
         {
             try
@@ -146,6 +160,8 @@ public class Server
         {
             var jsonMessage = JsonSerializer.Serialize(message);
             await targetWriter.WriteLineAsync(jsonMessage);
+
+            ChatLogger.Log($"[{DateTime.Now:HH:mm:ss}] [PM {message.From} -> {message.To}]: {message.Text}");
 
             if (message.From != null && s_clients.TryGetValue(message.From, out var sourceWriter))
             {
