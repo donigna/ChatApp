@@ -97,6 +97,7 @@ public partial class MainWindow : Window
         }
     }
 
+
     private async Task ListenForMessagesAsync()
     {
         try
@@ -126,6 +127,12 @@ public partial class MainWindow : Window
                             break;
                         case MessageType.UserList:
                             UpdateUserList(message.Users);
+                            break;
+                        case MessageType.Typing:
+                            TypingIndicator.Text = $"{message.From} sedang mengetik...";
+                            break;
+                        case MessageType.StopTyping:
+                            TypingIndicator.Text = "";
                             break;
                         default:
                             AddMessageToChat($"[DEBUG]: Pesan tidak dikenali: {jsonMessage}", Brushes.DarkRed);
@@ -251,4 +258,37 @@ public partial class MainWindow : Window
             await SendMessageAsync();
         }
     }
+
+    private async void MessageTextBox_TextChanged(object? sender, Avalonia.Controls.TextChangedEventArgs e)
+    {
+        if (!_isConnected || _writer == null) return;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(MessageTextBox.Text))
+            {
+                var typingMessage = new ChatMessage
+                {
+                    Type = MessageType.Typing,
+                    From = _username
+                };
+                await _writer.WriteLineAsync(JsonSerializer.Serialize(typingMessage));
+            }
+            else
+            {
+                var stopTypingMessage = new ChatMessage
+                {
+                    Type = MessageType.StopTyping,
+                    From = _username
+                };
+                await _writer.WriteLineAsync(JsonSerializer.Serialize(stopTypingMessage));
+            }
+        }
+        catch (Exception ex)
+        {
+            AddMessageToChat($"[SYSTEM]: Error typing indicator: {ex.Message}", Brushes.Red);
+        }
+    }
+
+
 }

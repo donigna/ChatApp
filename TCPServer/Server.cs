@@ -24,6 +24,25 @@ public class Server
         }
     }
 
+    private static async Task BroadcastTypingAsync(ChatMessage message, string sender)
+    {
+        var jsonMessage = JsonSerializer.Serialize(message);
+
+        foreach (var kvp in s_clients)
+        {
+            if (kvp.Key == sender) continue; // jangan kirim ke pengirim sendiri
+
+            try
+            {
+                await kvp.Value.WriteLineAsync(jsonMessage);
+            }
+            catch
+            {
+                
+            }
+        }
+    } 
+
     private static async Task HandleClientAsync(TcpClient client)
     {
         string username = string.Empty;
@@ -89,6 +108,15 @@ public class Server
                     case MessageType.Private:
                         Console.WriteLine($"[Private] Dari {username} ke {message.To}: {message.Text}");
                         await SendPrivateMessageAsync(message);
+                        break;
+                    case MessageType.Typing:
+                        Console.WriteLine($"[Typing] {username} sedang mengetik...");
+                        await BroadcastTypingAsync(message, username);
+                        break;
+
+                    case MessageType.StopTyping:
+                        Console.WriteLine($"[StopTyping] {username} berhenti mengetik.");
+                        await BroadcastTypingAsync(message, username);
                         break;
                 }
             }

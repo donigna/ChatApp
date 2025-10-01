@@ -9,6 +9,9 @@ namespace ChatShared
         Private,
         UserList,
         System,
+        Chat,
+        Typing,
+        StopTyping
     }
 
     public class ChatMessage
@@ -19,6 +22,8 @@ namespace ChatShared
         public string? Text { get; set; }
         public long Timestamp { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public string[] Users { get; set; } = [];
+        public string? Sender { get; set; }
+        public string? Content { get; set; }
     }
 }
 

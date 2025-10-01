@@ -38,6 +38,14 @@
 
             <DockPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="5">
                 
+			<TextBlock x:Name="TypingIndicator"
+               Text=""
+               Foreground="Gray"
+               FontStyle="Italic"
+               VerticalAlignment="Center"
+               Margin="5,0,0,0"
+               DockPanel.Dock="Left"/>
+				
             <Button x:Name="SendButton"
                     Width="60"
                     DockPanel.Dock="Right"
@@ -47,7 +55,10 @@
         
             <TextBox x:Name="MessageTextBox"
                     Watermark="Ketik pesan..."
-                    VerticalAlignment="Center" KeyDown="MessageTextBox_KeyDown"/>
+                    VerticalAlignment="Center" KeyDown="MessageTextBox_KeyDown"
+					TextChanged="MessageTextBox_TextChanged"/>
+			
+				
             </DockPanel>
 
         </Grid>
